@@ -27,22 +27,27 @@ export function Chatbot({ destination }) {
     setIsTyping(true);
 
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      const apiKey = import.meta.env.VITE_API_KEY;
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+        `https://open.bigmodel.cn/api/paas/v4/chat/completions`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}` 
+          },
           body: JSON.stringify({
-            contents: [{
-              parts: [{ text: `You are a helpful travel assistant for a web app called Wanderlust. The user is asking: "${currentInput}". ${destination ? `They are currently planning a trip to ${destination}.` : ""} Provide a concise, helpful response (max 3 sentences).` }]
-            }]
+            model: "glm-4.5-flash",
+            messages: [
+              { role: "system", content: "You are a helpful travel assistant for a web app called Wanderlust. Provide concise, helpful responses (max 3 sentences)." },
+              { role: "user", content: `User is planning a trip to ${destination || 'their destination'}. Question: ${currentInput}` }
+            ]
           })
         }
       );
 
       const data = await response.json();
-      const botText = data.candidates?.[0]?.content?.parts?.[0]?.text || "I'm sorry, I couldn't process that request.";
+      const botText = data.choices?.[0]?.message?.content || "I'm sorry, I couldn't process that request.";
       
       setMessages(prev => [...prev, { role: 'bot', text: botText }]);
     } catch (error) {
